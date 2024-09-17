@@ -1403,7 +1403,7 @@ define("node/NodeShapeConfig", ["require", "exports"], function (require, export
     };
     exports.NodeUIConfig = {
         icon: {
-            path: '../../icons/selected',
+            path: '../icons/selected',
             width: 16,
             height: 16,
         },
