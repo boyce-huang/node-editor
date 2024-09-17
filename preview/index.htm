@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Starter Node</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" type="text/css" href="./css/style.css" />
+  </head>
+  <body>
+    <h1 style="display: none;">Welcome to Starter Node</h1>
+    <p style="display: none;">This is a sample Node.js application.</p>
+    <section class="canvaStatus">
+      <p>Page: <span id="PagePos"></span></p>
+      <p>Layer: <span id="LayerPos"></span></p>
+      <p>Client: <span id="ClientPos"></span></p>
+      <p>Movement: <span id="MovementPos"></span></p>
+      <p>Offset: <span id="OffsetPos"></span></p>
+      <p>Screen: <span id="ScreenPos"></span></p>
+      <p>Pos: <span id="Pos"></span></p>
+      <!-- <p>Status: <span id="StatusPos"></span></p> -->
+    </section>
+    <section class="canvaStatus" style="margin-right: 160px">
+      <p>transform: <span id="CanvasTransformPos"></span></p>
+      <p>Pos: <span id="CanvasPos"></span></p>
+      <p>Zoom: <span id="StatusZoom"></span></p>
+      <!-- <p>Layer: <span id="CanvasLayerPos"></span></p>
+      <p>Client: <span id="CanvasClientPos"></span></p>
+      <p>Movement: <span id="CanvasMovementPos"></span></p>
+      <p>Offset: <span id="CanvasOffsetPos"></span></p>
+      <p>Screen: <span id="CanvasScreenPos"></span></p>
+      <p>Status: <span id="CanvasStatusPos"></span></p> -->
+    </section>
+    <section class="canvaStatus" style="margin-top: 220px">
+      <menu type="list" id="shapeAddButtons">
+        <li style="line-height: 2; font-size: 120%">
+          <a href="javascript:void(0)" onclick="saveStage('Stage1')">Save</a>
+        </li>
+        <li style="line-height: 2; font-size: 120%">
+          <a href="javascript:void(0)" onclick="reloadStage('Stage1')"
+            >Reload</a
+          >
+        </li>
+        <li style="line-height: 2; font-size: 120%">
+          <a href="javascript:void(0)" onclick="resetStage('Stage1')">Reset</a>
+        </li>
+        <li style="line-height: 2; font-size: 120%">Add Shape</li>
+      </menu>
+    </section>
+    <div class="nodeStage" id="nodeStage1"></div>
+
+    <script src="./libs/require.js" data-main="../dist/editor.js"></script>
+    <script src="../dist/editor.js"></script>
+    <script src="./demo.js"></script>
+    <script type="text/javascript">
+      let Api = null;
+      requirejs(["demo/run"], function (api) {
+        Api = api;
+        // shapeClassMap
+        // console.log("shapeClassMap", api.shapeClassMap);
+        const buttonContainer = document.getElementById("shapeAddButtons");
+        const shapteClassMap = api.shapeClassMap;
+        const keys = Object.keys(shapteClassMap);
+        keys.forEach((key) => {
+          const menuItem = document.createElement("li");
+          const button = document.createElement("a");
+          button.innerText = key;
+          button.href = "javascript:void(0)";
+          button.addEventListener("click", function (event) {
+            api.addNodeShape(
+              "nodeStage1",
+              key,
+              {
+                position: {
+                  x: 100 + Math.floor(Math.random() * 500),
+                  y: 100 + Math.floor(Math.random() * 400),
+                },
+              },
+              {}
+            );
+          });
+          menuItem.appendChild(button);
+          buttonContainer.appendChild(menuItem);
+        });
+      });
+      function addShape() {
+        console.log("addShape");
+        Api.addNodeShape(
+          "nodeStage1",
+          "StartMessage",
+          {
+            position: {
+              x: 100 + Math.floor(Math.random() * 500),
+              y: 100 + Math.floor(Math.random() * 400),
+            },
+          },
+          {}
+        );
+        reflashStage();
+        // requirejs(["demo/run"], function (api) {});
+      }
+      function reflashStage() {
+        console.log("reflashStage");
+        var stage = Api.getStage("nodeStage1");
+        stage.reflash();
+        // requirejs(["demo/run"], function (api) {});
+      }
+      function saveStage(stageId) {
+        const stage = Api.getStage(stageId);
+        const stageData = {
+          stageId: stageId,
+        };
+        /* shapeData
+         **************/
+        stageData["scale"] = stage.scale;
+        stageData["transform"] = stage.transform;
+        /* shapeData
+         **************/
+        const shapes = stage.shapes;
+        if (shapes != null && shapes.length > 0) {
+          const shapesData = shapes.map((shape) => {
+            return shape.getDataToSave();
+          });
+          stageData["shapes"] = shapesData;
+        } else {
+          stageData["shapes"] = [];
+        }
+        /* linkData
+         **************/
+        const links = stage.canvaLinks;
+        if (links != null && links.length > 0) {
+          const linksData = links.map((link) => {
+            return {
+              from: {
+                uuid: link.from.uuid,
+                shapeId: link.from.parent.uuid,
+              },
+              to: {
+                uuid: link.to.uuid,
+                shapeId: link.to.parent.uuid,
+              },
+            };
+          });
+          stageData["links"] = linksData;
+        } else {
+          stageData["links"] = [];
+        }
+        console.log("saveStage", stageData);
+        setStageInfo(stageData);
+      }
+      function reloadStage(stageId) {
+        resetStage(stageId);
+
+        const stage = Api.getStage(stageId);
+
+        const stageInfo = getStageInfo(stageId);
+
+        const { scale, transform, shapes } = stageInfo;
+        // stage.scale = scale;
+        // stage.transform = transform;
+        stage.zoomAndTransform(scale, transform.e, transform.f);
+        // const scale = stageData["scale"];
+        // const transform = stageData["transform"];
+        // const shapes = stageInfo["shapes"];
+
+        if (shapes != null && shapes.length > 0) {
+          shapes.forEach((shapeData) => {
+            // console.log("shapeData", shapeData);
+            const { name, options, data, size } = shapeData;
+            // const shapeName = shapeData["name"];
+            // // const shapeClass = Api.shapeClassMap[shapeName];
+            // const position = shapeData["position"];
+            // const size = shapeData["size"];
+            // const data = shapeData["data"];
+            Api.addNodeShape(
+              stageId,
+              name,
+              options,
+              data,
+              size,
+            );
+          });
+        }
+        if(stageInfo.links != null && stageInfo.links.length > 0){
+          stageInfo.links.forEach((linkData) => {
+            const { from, to } = linkData;
+            const fromShape = stage.shapes.find(t=> t.uuid == from.shapeId);
+            const toShape = stage.shapes.find(t=> t.uuid == to.shapeId);
+            const fromLink = fromShape.children.find(t=> t.uuid === from.uuid);
+            const toLink = toShape.children.find(t=> t.uuid === to.uuid);
+            stage.addLink(fromLink, toLink);
+          });
+        }
+        console.log("reloadStage", stageInfo);
+      }
+      function resetStage(stageId) {
+        console.log("resetStage");
+        const stage = Api.getStage(stageId);
+        stage.reset();
+      }
+    </script>
+  </body>
+</html>
