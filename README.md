@@ -8,7 +8,7 @@ a node editor using only typescript
 
 
 ### preview
-[preview online](./preview/index.htm)
+[preview online](https://boyce-huang.github.io/node-editor/preview/index.htm)
 
 
 ### Showcase
